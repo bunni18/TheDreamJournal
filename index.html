@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dream Journal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #090804;
+  --bg2:      #110f08;
+  --surface:  #181409;
+  --surface2: #201c0f;
+  --surface3: #282314;
+  --gold:     #c8a44a;
+  --gold2:    #e6ca78;
+  --gold-dim: rgba(200,164,74,0.13);
+  --cream:    #f2ebd6;
+  --cream2:   #d6cab0;
+  --muted:    #7a7260;
+  --border:   rgba(200,164,74,0.16);
+  --border2:  rgba(200,164,74,0.34);
+  --text:     #eae1cc;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'EB Garamond', serif;
+  font-size: 16px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(200,164,74,0.055) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 40% at 90% 90%, rgba(200,164,74,0.025) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── SHELL ── */
+.app { max-width: 430px; margin: 0 auto; min-height: 100vh; position: relative; z-index: 1; display: flex; flex-direction: column; }
+
+.screen { display: none; flex-direction: column; min-height: 100vh; animation: fadeIn 0.3s ease; }
+.screen.active { display: flex; }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── TOP BAR ── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(9,8,4,0.97);
+  position: sticky; top: 0; z-index: 10;
+}
+.topbar-title { font-family:'Cinzel',serif; font-size:17px; font-weight:500; color:var(--gold); letter-spacing:0.1em; }
+.topbar-sub   { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:0.06em; margin-top:1px; }
+.back-btn { background:none; border:none; color:var(--gold); font-size:20px; cursor:pointer; padding:4px 10px; border-radius:4px; line-height:1; }
+.back-btn:hover { background:var(--gold-dim); }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav { display:flex; background:var(--bg2); border-top:1px solid var(--border); position:sticky; bottom:0; z-index:10; }
+.nav-btn { flex:1; background:none; border:none; padding:12px 0 9px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--muted); transition:color 0.2s; }
+.nav-btn.active, .nav-btn:hover { color:var(--gold); }
+.nav-icon  { font-size:19px; }
+.nav-label { font-size:9px; font-family:'DM Mono',monospace; letter-spacing:0.12em; text-transform:uppercase; }
+
+.scroll-content { flex:1; overflow-y:auto; padding:22px; }
+
+/* ── SCRIPTURE CARD ── */
+.scripture-card {
+  background: linear-gradient(135deg, var(--surface), var(--surface2));
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 22px 24px;
+  margin-bottom: 24px;
+  position: relative; overflow: hidden;
+}
+.scripture-card::after {
+  content: attr(data-watermark);
+  position: absolute; right:18px; bottom:12px;
+  font-family:'Cinzel',serif; font-size:38px; font-weight:600;
+  color: rgba(200,164,74,0.055);
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+.scripture-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.38em; text-transform:uppercase; color:var(--gold); margin-bottom:11px; }
+.scripture-text  { font-style:italic; font-size:17px; color:var(--cream); line-height:1.85; margin-bottom:9px; }
+.scripture-ref   { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:0.1em; }
+
+/* ── QUOTA ── */
+.quota-row { display:flex; gap:12px; margin-bottom:24px; }
+.quota-box { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:14px 16px; }
+.quota-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.quota-count { font-family:'Cinzel',serif; font-size:22px; color:var(--gold); }
+.quota-count span { font-size:12px; color:var(--muted); font-family:'DM Mono',monospace; }
+.quota-bar { margin-top:9px; height:3px; background:rgba(200,164,74,0.13); border-radius:2px; overflow:hidden; }
+.quota-fill { height:100%; background:linear-gradient(to right,var(--gold),var(--gold2)); border-radius:2px; transition:width 0.45s ease; }
+
+/* ── SECTION HEADING ── */
+.section-heading { font-family:'Cinzel',serif; font-size:12px; letter-spacing:0.18em; color:var(--gold); text-transform:uppercase; margin-bottom:14px; }
+.subheading      { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.32em; text-transform:uppercase; color:var(--gold); margin-bottom:10px; }
+
+/* ── DREAM ENTRY CARD ── */
+.dream-entry {
+  background: var(--surface); border:1px solid var(--border); border-radius:6px;
+  padding:16px 18px; margin-bottom:12px; cursor:pointer; transition:all 0.2s;
+  position:relative; overflow:hidden;
+}
+.dream-entry::before { content:''; position:absolute; left:0;top:0;bottom:0; width:3px; background:var(--gold); opacity:0; transition:opacity 0.2s; }
+.dream-entry:hover { border-color:var(--border2); background:var(--surface2); }
+.dream-entry:hover::before { opacity:1; }
+.entry-date  { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:0.14em; margin-bottom:5px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.entry-badge { font-size:9px; padding:2px 7px; border-radius:8px; background:rgba(200,164,74,0.11); color:var(--gold); border:1px solid rgba(200,164,74,0.24); }
+.entry-title { font-family:'Cinzel',serif; font-size:15px; color:var(--cream); margin-bottom:5px; }
+.entry-preview { font-size:13px; color:var(--muted); line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.entry-symbols { margin-top:10px; display:flex; flex-wrap:wrap; gap:5px; }
+.symbol-chip { font-size:10px; padding:2px 9px; background:rgba(200,164,74,0.08); border:1px solid rgba(200,164,74,0.2); border-radius:10px; color:var(--gold2); font-family:'DM Mono',monospace; cursor:pointer; transition:background 0.2s; }
+.symbol-chip:hover { background:rgba(200,164,74,0.18); }
+
+/* ── FAB ── */
+.fab {
+  position:fixed; bottom:80px; right:calc(50% - 215px + 22px);
+  width:56px; height:56px; border-radius:50%;
+  background:linear-gradient(135deg,#7a5a14,var(--gold));
+  border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-family:'Cinzel',serif; font-size:22px; color:var(--bg);
+  box-shadow:0 4px 22px rgba(200,164,74,0.38); transition:all 0.2s; z-index:20;
+}
+.fab:hover { transform:scale(1.07); box-shadow:0 6px 30px rgba(200,164,74,0.5); }
+@media(max-width:430px){ .fab{ right:22px; } }
+
+/* ── FORM ── */
+.form-group { margin-bottom:20px; }
+.form-label { display:block; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.32em; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
+.form-input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:12px 15px; color:var(--text); font-family:'EB Garamond',serif; font-size:15px; outline:none; resize:none; transition:border-color 0.2s; }
+.form-input:focus { border-color:var(--border2); }
+.form-input::placeholder { color:var(--muted); font-style:italic; }
+textarea.form-input { min-height:150px; }
+
+/* ── MOOD ── */
+.mood-row { display:flex; gap:8px; flex-wrap:wrap; }
+.mood-btn { flex:1; min-width:70px; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:10px 8px; cursor:pointer; text-align:center; color:var(--muted); font-size:11px; font-family:'DM Mono',monospace; transition:all 0.2s; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.mood-btn .m-icon { font-size:20px; }
+.mood-btn:hover { border-color:var(--border2); color:var(--cream2); }
+.mood-btn.selected { border-color:var(--gold); background:var(--gold-dim); color:var(--gold); }
+
+/* ── VOICE ── */
+.voice-box { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:22px; text-align:center; margin-bottom:20px; }
+.voice-status { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); margin-bottom:15px; letter-spacing:0.1em; }
+.voice-status.rec { color:#e8a87a; animation:blink 1s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
+.record-btn { width:62px; height:62px; border-radius:50%; background:var(--surface2); border:2px solid var(--border2); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:27px; margin:0 auto 13px; transition:all 0.2s; }
+.record-btn:hover { border-color:var(--gold); }
+.record-btn.rec { border-color:#e8a87a; background:rgba(232,168,122,0.09); animation:blink 1s ease-in-out infinite; }
+.voice-used-lbl { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:0.1em; }
+
+/* ── SAVE BTN ── */
+.save-btn { width:100%; background:linear-gradient(135deg,#7a5a14,var(--gold)); border:none; border-radius:6px; padding:15px; color:var(--bg); font-family:'Cinzel',serif; font-size:14px; letter-spacing:0.17em; cursor:pointer; transition:all 0.2s; }
+.save-btn:hover { opacity:0.9; transform:translateY(-1px); }
+.save-btn:disabled { opacity:0.38; cursor:not-allowed; transform:none; }
+
+/* ── DETAIL ── */
+.detail-body { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:20px; margin-bottom:22px; font-size:15px; line-height:1.9; color:var(--cream2); }
+.symbol-card { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:16px 18px; margin-bottom:10px; }
+.symbol-name { font-family:'Cinzel',serif; font-size:15px; color:var(--gold); margin-bottom:4px; }
+.symbol-meaning { font-size:13px; color:var(--muted); font-style:italic; margin-bottom:9px; }
+.symbol-scripture { font-size:12px; color:var(--cream2); background:rgba(200,164,74,0.06); border-left:2px solid var(--gold); padding:9px 13px; border-radius:0 4px 4px 0; line-height:1.7; }
+.symbol-ref { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); margin-top:5px; letter-spacing:0.1em; }
+
+/* ── LIBRARY ── */
+.library-search { position:relative; margin-bottom:18px; }
+.library-search input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:11px 15px 11px 38px; color:var(--text); font-family:'EB Garamond',serif; font-size:15px; outline:none; transition:border-color 0.2s; }
+.library-search input:focus { border-color:var(--border2); }
+.library-search input::placeholder { color:var(--muted); font-style:italic; }
+.lib-search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:15px; }
+.library-filter { display:flex; gap:8px; overflow-x:auto; margin-bottom:18px; padding-bottom:4px; scrollbar-width:none; }
+.library-filter::-webkit-scrollbar { display:none; }
+.filter-btn { flex-shrink:0; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:5px 14px; color:var(--muted); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.1em; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+.filter-btn.active { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
+.lib-item { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:14px 17px; margin-bottom:8px; cursor:pointer; transition:border-color 0.2s; }
+.lib-item:hover { border-color:var(--border2); }
+.lib-item-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.lib-item-name    { font-family:'Cinzel',serif; font-size:14px; color:var(--gold); }
+.lib-item-cat     { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:0.14em; text-transform:uppercase; }
+.lib-item-meaning { font-size:13px; color:var(--muted); font-style:italic; }
+.lib-item-expand  { display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+.lib-item.open .lib-item-expand { display:block; }
+
+/* ── REMINDERS ── */
+.reminder-card { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:20px 22px; margin-bottom:14px; }
+.reminder-title { font-family:'Cinzel',serif; font-size:14px; color:var(--gold); margin-bottom:14px; letter-spacing:0.1em; }
+.time-input { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:10px 14px; color:var(--gold); font-family:'Cinzel',serif; font-size:26px; letter-spacing:0.05em; width:160px; outline:none; text-align:center; }
+.toggle-wrap { display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--border); }
+.toggle-wrap:last-child { border-bottom:none; }
+.toggle-lbl { font-size:14px; color:var(--cream2); }
+.tog { width:44px; height:24px; background:var(--surface3); border:1px solid var(--border); border-radius:12px; position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0; }
+.tog.on { background:linear-gradient(to right,#7a5a14,var(--gold)); border-color:var(--gold); }
+.tog-dot { position:absolute; top:2px; left:2px; width:18px; height:18px; background:var(--cream); border-radius:50%; transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.4); }
+.tog.on .tog-dot { transform:translateX(20px); }
+
+/* ── TOAST ── */
+.toast { position:fixed; bottom:92px; left:50%; transform:translateX(-50%) translateY(18px); background:var(--surface2); border:1px solid var(--border2); border-radius:6px; padding:11px 20px; font-family:'DM Mono',monospace; font-size:12px; color:var(--gold); letter-spacing:0.1em; opacity:0; transition:all 0.3s; z-index:100; white-space:nowrap; pointer-events:none; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ── MODAL ── */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(4,3,1,0.88); z-index:50; align-items:flex-end; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--bg2); border:1px solid var(--border2); border-radius:12px 12px 0 0; padding:26px 24px 40px; width:100%; max-width:430px; animation:slideUp 0.3s ease; max-height:80vh; overflow-y:auto; }
+@keyframes slideUp { from{transform:translateY(38px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+.modal-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:0 auto 20px; }
+.modal-title  { font-family:'Cinzel',serif; font-size:18px; color:var(--gold); margin-bottom:6px; }
+.modal-sub    { font-size:13px; color:var(--muted); font-style:italic; margin-bottom:16px; }
+.modal-close  { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:12px; color:var(--muted); font-family:'Cinzel',serif; font-size:13px; cursor:pointer; margin-top:14px; transition:all 0.2s; }
+.modal-close:hover { border-color:var(--border2); color:var(--cream); }
+
+/* ── LIMIT WARNING ── */
+.limit-warn { background:rgba(120,50,50,0.14); border:1px solid rgba(140,60,60,0.38); border-radius:6px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#e0a0a0; font-style:italic; text-align:center; }
+.limit-warn.voice { background:rgba(200,164,74,0.07); border-color:rgba(200,164,74,0.24); color:var(--gold2); }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align:center; padding:52px 20px; color:var(--muted); }
+.empty-icon  { font-size:36px; margin-bottom:16px; opacity:0.28; }
+.empty-title { font-family:'Cinzel',serif; font-size:16px; color:var(--muted); margin-bottom:8px; }
+.empty-sub   { font-size:13px; color:var(--muted); font-style:italic; opacity:0.7; line-height:1.8; }
+
+/* ── SPLASH ── */
+#splash {
+  align-items:center; justify-content:center; text-align:center; padding:44px 32px;
+  background: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(200,164,74,0.07) 0%, transparent 70%), var(--bg);
+}
+.splash-wordmark { font-family:'Cinzel',serif; font-weight:400; letter-spacing:0.08em; margin-bottom:6px; }
+.splash-wordmark .the  { font-size:18px; color:var(--muted); display:block; margin-bottom:4px; letter-spacing:0.35em; text-transform:uppercase; }
+.splash-wordmark .main { font-size:48px; color:var(--gold); display:block; line-height:1; }
+.splash-divider { width:60px; height:1px; background:linear-gradient(to right,transparent,var(--gold),transparent); margin:18px auto 18px; }
+.splash-sub { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.38em; text-transform:uppercase; color:var(--muted); margin-bottom:38px; }
+.splash-verse { font-style:italic; font-size:17px; color:var(--cream2); line-height:1.85; margin-bottom:9px; max-width:320px; }
+.splash-ref   { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); margin-bottom:50px; }
+.splash-btn { background:linear-gradient(135deg,#7a5a14,var(--gold)); border:none; border-radius:6px; padding:15px 52px; color:var(--bg); font-family:'Cinzel',serif; font-size:15px; letter-spacing:0.22em; cursor:pointer; transition:all 0.2s; }
+.splash-btn:hover { opacity:0.9; transform:translateY(-2px); }
+.beta-note { margin-top:22px; font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:0.2em; opacity:0.7; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═══ SPLASH ═══ -->
+<div class="screen active" id="splash">
+  <div class="splash-wordmark">
+    <span class="the">The</span>
+    <span class="main">Dream Journal</span>
+  </div>
+  <div class="splash-divider"></div>
+  <div class="splash-sub">Christian · KJV · Beta</div>
+  <div class="splash-verse">"And it shall come to pass afterward, that I will pour out my spirit upon all flesh; and your sons and your daughters shall prophesy, your old men shall dream dreams."</div>
+  <div class="splash-ref">— Joel 2:28 (KJV)</div>
+  <button class="splash-btn" onclick="enterApp()">ENTER</button>
+  <div class="beta-note">Free Beta · Level One</div>
+</div>
+
+<!-- ═══ HOME ═══ -->
+<div class="screen" id="screen-home">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">The Dream Journal</div>
+      <div class="topbar-sub">Christian · KJV</div>
+    </div>
+    <div style="font-family:'Cinzel',serif;font-size:11px;color:var(--muted);letter-spacing:0.2em;">BETA</div>
+  </div>
+  <div class="scroll-content">
+    <div class="scripture-card" id="daily-scripture" data-watermark="KJV"></div>
+    <div class="quota-row">
+      <div class="quota-box">
+        <div class="quota-label">Dreams Logged</div>
+        <div class="quota-count" id="dream-count">0 <span>/ 30</span></div>
+        <div class="quota-bar"><div class="quota-fill" id="dream-bar" style="width:0%"></div></div>
+      </div>
+      <div class="quota-box">
+        <div class="quota-label">Voice Entries</div>
+        <div class="quota-count" id="voice-count">0 <span>/ 2</span></div>
+        <div class="quota-bar"><div class="quota-fill" id="voice-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="section-heading">Recent Dreams</div>
+    <div id="dream-list"></div>
+  </div>
+  <button class="fab" onclick="showLog()" title="Log a Dream">+</button>
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="navigate('home')"><span class="nav-icon">🌙</span><span class="nav-label">Journal</span></button>
+    <button class="nav-btn" onclick="navigate('library')"><span class="nav-icon">📖</span><span class="nav-label">Symbols</span></button>
+    <button class="nav-btn" onclick="navigate('reminder')"><span class="nav-icon">🔔</span><span class="nav-label">Reminders</span></button>
+  </div>
+</div>
+
+<!-- ═══ LOG DREAM ═══ -->
+<div class="screen" id="screen-log">
+  <div class="topbar">
+    <button class="back-btn" onclick="navigate('home')">←</button>
+    <div class="topbar-title">Log a Dream</div>
+    <div style="width:44px"></div>
+  </div>
+  <div class="scroll-content">
+    <div id="dream-limit-warn" class="limit-warn" style="display:none">You have reached the 30-dream limit for the free beta. Upgrade to continue.</div>
+    <div class="form-group">
+      <label class="form-label">Dream Title <span style="color:var(--muted);font-size:9px;letter-spacing:0;">(optional)</span></label>
+      <input class="form-input" type="text" id="dream-title" placeholder="Give this dream a name..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Describe Your Dream</label>
+      <textarea class="form-input" id="dream-body" rows="6" placeholder="Write what you remember, in as much detail as you can recall..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Voice Recording <span style="color:var(--muted);font-size:9px;letter-spacing:0;">— uses 1 of your 2 free slots</span></label>
+      <div class="voice-box">
+        <div class="voice-status" id="voice-status">Tap to record · 2 free recordings remaining</div>
+        <button class="record-btn" id="record-btn" onclick="toggleRecord()">🎙️</button>
+        <div class="voice-used-lbl" id="voice-used-lbl">0 of 2 voice recordings used</div>
+      </div>
+      <div id="voice-limit-warn" class="limit-warn voice" style="display:none">Voice recording limit (2 of 2) reached on the free beta tier.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">How Did You Feel?</label>
+      <div class="mood-row">
+        <button class="mood-btn" onclick="selectMood(this,'Peaceful')"><span class="m-icon">🕊️</span>Peaceful</button>
+        <button class="mood-btn" onclick="selectMood(this,'Fearful')"><span class="m-icon">😰</span>Fearful</button>
+        <button class="mood-btn" onclick="selectMood(this,'Joyful')"><span class="m-icon">✨</span>Joyful</button>
+        <button class="mood-btn" onclick="selectMood(this,'Troubled')"><span class="m-icon">🌪️</span>Troubled</button>
+      </div>
+    </div>
+    <button class="save-btn" id="save-btn" onclick="saveDream()">Save Dream Entry</button>
+  </div>
+</div>
+
+<!-- ═══ DETAIL ═══ -->
+<div class="screen" id="screen-detail">
+  <div class="topbar">
+    <button class="back-btn" onclick="navigate('home')">←</button>
+    <div class="topbar-title" id="detail-bar-title">Dream</div>
+    <div style="width:44px"></div>
+  </div>
+  <div class="scroll-content">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.18em;margin-bottom:5px;" id="detail-date"></div>
+    <div style="font-family:'Cinzel',serif;font-size:20px;color:var(--cream);margin-bottom:8px;" id="detail-title"></div>
+    <div id="detail-mood" style="margin-bottom:16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);"></div>
+    <div class="subheading">Your Dream</div>
+    <div class="detail-body" id="detail-body"></div>
+    <div class="subheading" style="margin-bottom:12px;">Detected Symbols &amp; Biblical Meaning</div>
+    <div id="detail-symbols"></div>
+  </div>
+</div>
+
+<!-- ═══ SYMBOL LIBRARY ═══ -->
+<div class="screen" id="screen-library">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Symbol Library</div>
+      <div class="topbar-sub">100 Biblical Symbols · KJV</div>
+    </div>
+  </div>
+  <div class="scroll-content">
+    <div class="library-search">
+      <span class="lib-search-icon">⌕</span>
+      <input type="text" id="lib-search" placeholder="Search symbols..." oninput="renderLibrary()" />
+    </div>
+    <div class="library-filter">
+      <button class="filter-btn active" onclick="filterCat(this,'all')">All</button>
+      <button class="filter-btn" onclick="filterCat(this,'nature')">Nature</button>
+      <button class="filter-btn" onclick="filterCat(this,'creature')">Creatures</button>
+      <button class="filter-btn" onclick="filterCat(this,'object')">Objects</button>
+      <button class="filter-btn" onclick="filterCat(this,'person')">People</button>
+      <button class="filter-btn" onclick="filterCat(this,'place')">Places</button>
+      <button class="filter-btn" onclick="filterCat(this,'action')">Actions</button>
+    </div>
+    <div id="library-list"></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-btn" onclick="navigate('home')"><span class="nav-icon">🌙</span><span class="nav-label">Journal</span></button>
+    <button class="nav-btn active" onclick="navigate('library')"><span class="nav-icon">📖</span><span class="nav-label">Symbols</span></button>
+    <button class="nav-btn" onclick="navigate('reminder')"><span class="nav-icon">🔔</span><span class="nav-label">Reminders</span></button>
+  </div>
+</div>
+
+<!-- ═══ REMINDERS ═══ -->
+<div class="screen" id="screen-reminder">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Reminders</div>
+      <div class="topbar-sub">Morning Devotion · Dream Recall</div>
+    </div>
+  </div>
+  <div class="scroll-content">
+    <div class="scripture-card" data-watermark="KJV" style="margin-bottom:26px;">
+      <div class="scripture-label">Today's Scripture · KJV</div>
+      <div class="scripture-text" id="rem-verse"></div>
+      <div class="scripture-ref"  id="rem-ref"></div>
+    </div>
+    <div class="reminder-card">
+      <div class="reminder-title">Morning Dream Recall</div>
+      <div class="toggle-wrap">
+        <span class="toggle-lbl">Enable morning reminder</span>
+        <div class="tog on" id="tog-morning" onclick="togSwitch('tog-morning')"><div class="tog-dot"></div></div>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="form-label" style="margin-bottom:8px;">Your Wake Time</div>
+        <input type="time" class="time-input" id="wake-time" value="06:30" />
+        <div style="font-size:12px;color:var(--muted);font-style:italic;margin-top:8px;line-height:1.6;">Notification sent within 5 minutes of your wake time to capture dreams before they fade.</div>
+      </div>
+    </div>
+    <div class="reminder-card">
+      <div class="reminder-title">Daily Scripture · KJV Only</div>
+      <div style="font-size:13px;color:var(--muted);font-style:italic;margin-bottom:14px;line-height:1.6;">All scripture notifications are delivered in the King James Version exclusively.</div>
+      <div class="toggle-wrap">
+        <span class="toggle-lbl">Send daily KJV scripture</span>
+        <div class="tog on" id="tog-scripture" onclick="togSwitch('tog-scripture')"><div class="tog-dot"></div></div>
+      </div>
+      <div class="toggle-wrap">
+        <span class="toggle-lbl">Dream &amp; vision verses only</span>
+        <div class="tog on" id="tog-dreamverse" onclick="togSwitch('tog-dreamverse')"><div class="tog-dot"></div></div>
+      </div>
+      <div class="toggle-wrap">
+        <span class="toggle-lbl">Prophetic verses</span>
+        <div class="tog on" id="tog-prophetic" onclick="togSwitch('tog-prophetic')"><div class="tog-dot"></div></div>
+      </div>
+      <div class="toggle-wrap">
+        <span class="toggle-lbl">Evening reflection prompt</span>
+        <div class="tog" id="tog-evening" onclick="togSwitch('tog-evening')"><div class="tog-dot"></div></div>
+      </div>
+    </div>
+    <button class="save-btn" onclick="saveReminders()" style="margin-top:6px;">Save Reminder Settings</button>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-btn" onclick="navigate('home')"><span class="nav-icon">🌙</span><span class="nav-label">Journal</span></button>
+    <button class="nav-btn" onclick="navigate('library')"><span class="nav-icon">📖</span><span class="nav-label">Symbols</span></button>
+    <button class="nav-btn active" onclick="navigate('reminder')"><span class="nav-icon">🔔</span><span class="nav-label">Reminders</span></button>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="sym-modal" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="m-name"></div>
+    <div class="modal-sub"   id="m-meaning"></div>
+    <div class="symbol-scripture" id="m-scripture"></div>
+    <div class="symbol-ref"       id="m-ref"></div>
+    <button class="modal-close" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// KJV SCRIPTURE ROTATION  (20 dream/vision verses)
+// ══════════════════════════════════════════════════
+const VERSES = [
+  {t:"And it shall come to pass afterward, that I will pour out my spirit upon all flesh; and your sons and your daughters shall prophesy, your old men shall dream dreams.",r:"Joel 2:28 (KJV)"},
+  {t:"For God speaketh once, yea twice, yet man perceiveth it not. In a dream, in a vision of the night, when deep sleep falleth upon men.",r:"Job 33:14–15 (KJV)"},
+  {t:"And Jacob dreamed, and behold a ladder set up on the earth, and the top of it reached to heaven: and behold the angels of God ascending and descending on it.",r:"Genesis 28:12 (KJV)"},
+  {t:"The LORD appeared to Solomon in a dream by night: and God said, Ask what I shall give thee.",r:"1 Kings 3:5 (KJV)"},
+  {t:"I will bless the LORD, who hath given me counsel: my reins also instruct me in the night seasons.",r:"Psalm 16:7 (KJV)"},
+  {t:"I the LORD will make myself known unto him in a vision, and will speak unto him in a dream.",r:"Numbers 12:6 (KJV)"},
+  {t:"An angel of the Lord appeared to Joseph in a dream, saying, Rise, take the child and his mother, and flee to Egypt.",r:"Matthew 2:13 (KJV)"},
+  {t:"For I know the thoughts that I think toward you, saith the LORD, thoughts of peace, and not of evil, to give you an expected end.",r:"Jeremiah 29:11 (KJV)"},
+  {t:"Your young men shall see visions, and your old men shall dream dreams.",r:"Acts 2:17 (KJV)"},
+  {t:"Search me, O God, and know my heart: try me, and know my thoughts.",r:"Psalm 139:23 (KJV)"},
+  {t:"Trust in the LORD with all thine heart; and lean not unto thine own understanding.",r:"Proverbs 3:5 (KJV)"},
+  {t:"Be still, and know that I am God: I will be exalted among the heathen, I will be exalted in the earth.",r:"Psalm 46:10 (KJV)"},
+  {t:"The LORD is my shepherd; I shall not want.",r:"Psalm 23:1 (KJV)"},
+  {t:"Thy word is a lamp unto my feet, and a light unto my path.",r:"Psalm 119:105 (KJV)"},
+  {t:"But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles.",r:"Isaiah 40:31 (KJV)"},
+  {t:"Be strong and of a good courage; be not afraid, neither be thou dismayed: for the LORD thy God is with thee whithersoever thou goest.",r:"Joshua 1:9 (KJV)"},
+  {t:"For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.",r:"John 3:16 (KJV)"},
+  {t:"He that dwelleth in the secret place of the most High shall abide under the shadow of the Almighty.",r:"Psalm 91:1 (KJV)"},
+  {t:"For the word of God is quick, and powerful, and sharper than any twoedged sword.",r:"Hebrews 4:12 (KJV)"},
+  {t:"The LORD bless thee, and keep thee: The LORD make his face shine upon thee, and be gracious unto thee.",r:"Numbers 6:24–25 (KJV)"},
+];
+
+// ══════════════════════════════════════════════════
+// 100 BIBLICAL SYMBOLS  (all KJV scripture)
+// ══════════════════════════════════════════════════
+const SYMBOLS = [
+  // NATURE (22)
+  {n:"Water",      c:"nature",  m:"Cleansing, the Holy Spirit, or tribulation",     s:"Out of his belly shall flow rivers of living water.",                                        r:"John 7:38 (KJV)"},
+  {n:"Fire",       c:"nature",  m:"God's presence, purification, or judgment",      s:"For our God is a consuming fire.",                                                           r:"Hebrews 12:29 (KJV)"},
+  {n:"Wind",       c:"nature",  m:"The Holy Spirit moving freely",                   s:"The wind bloweth where it listeth, and thou hearest the sound thereof.",                     r:"John 3:8 (KJV)"},
+  {n:"Storm",      c:"nature",  m:"Trial, spiritual warfare, or divine testing",    s:"He arose, and rebuked the wind and the raging of the water: and they ceased.",               r:"Luke 8:24 (KJV)"},
+  {n:"Light",      c:"nature",  m:"God's glory, truth, or divine revelation",       s:"Thy word is a lamp unto my feet, and a light unto my path.",                                 r:"Psalm 119:105 (KJV)"},
+  {n:"Darkness",   c:"nature",  m:"Spiritual blindness, evil, or the unknown",      s:"The people that walked in darkness have seen a great light.",                                r:"Isaiah 9:2 (KJV)"},
+  {n:"River",      c:"nature",  m:"Life, blessing, or the Spirit of God",           s:"A pure river of water of life, clear as crystal, proceeding out of the throne of God.",      r:"Revelation 22:1 (KJV)"},
+  {n:"Sea",        c:"nature",  m:"Nations, overwhelming trials, or the deep",      s:"The wicked are like the troubled sea, when it cannot rest.",                                 r:"Isaiah 57:20 (KJV)"},
+  {n:"Rain",       c:"nature",  m:"Blessing, revival, or the Spirit poured out",   s:"He shall come down like rain upon the mown grass: as showers that water the earth.",          r:"Psalm 72:6 (KJV)"},
+  {n:"Snow",       c:"nature",  m:"Purity, forgiveness, or spiritual cleansing",   s:"Though your sins be as scarlet, they shall be as white as snow.",                            r:"Isaiah 1:18 (KJV)"},
+  {n:"Flood",      c:"nature",  m:"Judgment, overwhelming trial, or divine cleansing", s:"When the enemy shall come in like a flood, the Spirit of the LORD shall lift up a standard.", r:"Isaiah 59:19 (KJV)"},
+  {n:"Rainbow",    c:"nature",  m:"God's covenant, promise, and faithfulness",     s:"I do set my bow in the cloud, and it shall be for a token of a covenant between me and the earth.", r:"Genesis 9:13 (KJV)"},
+  {n:"Sun",        c:"nature",  m:"God's glory, righteousness, or Christ's presence", s:"The LORD God is a sun and shield: the LORD will give grace and glory.",                    r:"Psalm 84:11 (KJV)"},
+  {n:"Moon",       c:"nature",  m:"Reflected glory, seasons, or the church",       s:"God made two great lights; the greater light to rule the day, and the lesser light to rule the night.", r:"Genesis 1:16 (KJV)"},
+  {n:"Stars",      c:"nature",  m:"Angels, Abraham's seed, or spiritual leaders",  s:"They that be wise shall shine as the brightness of the firmament; and they that turn many to righteousness as the stars for ever.", r:"Daniel 12:3 (KJV)"},
+  {n:"Cloud",      c:"nature",  m:"God's presence, covering, or divine protection", s:"The LORD went before them by day in a pillar of a cloud, to lead them the way.",            r:"Exodus 13:21 (KJV)"},
+  {n:"Tree",       c:"nature",  m:"Righteousness, life, or the cross of Christ",   s:"He shall be like a tree planted by the rivers of water, that bringeth forth his fruit in his season.", r:"Psalm 1:3 (KJV)"},
+  {n:"Fruit",      c:"nature",  m:"Works of righteousness or gifts of the Spirit", s:"The fruit of the Spirit is love, joy, peace, longsuffering, gentleness, goodness, faith.",    r:"Galatians 5:22 (KJV)"},
+  {n:"Vine",       c:"nature",  m:"Christ, the church, or spiritual connection",   s:"I am the vine, ye are the branches: he that abideth in me, and I in him, the same bringeth forth much fruit.", r:"John 15:5 (KJV)"},
+  {n:"Wheat",      c:"nature",  m:"Believers, harvest of souls, or abundance",     s:"The field is the world; the good seed are the children of the kingdom.",                     r:"Matthew 13:38 (KJV)"},
+  {n:"Earthquake", c:"nature",  m:"God's power, shaking of kingdoms, upheaval",    s:"The earth shook and trembled; the foundations also of the hills moved and were shaken.",     r:"Psalm 18:7 (KJV)"},
+  {n:"Desert",     c:"nature",  m:"Testing, preparation, or spiritual dryness",    s:"He was there in the wilderness forty days, tempted of Satan.",                               r:"Mark 1:13 (KJV)"},
+  // CREATURES (12)
+  {n:"Lion",       c:"creature", m:"Christ the King, boldness, or Satan as adversary", s:"The lion of the tribe of Juda, the Root of David, hath prevailed.",                       r:"Revelation 5:5 (KJV)"},
+  {n:"Lamb",       c:"creature", m:"Jesus Christ, sacrifice, and innocence",           s:"Behold the Lamb of God, which taketh away the sin of the world.",                         r:"John 1:29 (KJV)"},
+  {n:"Serpent",    c:"creature", m:"Satan, deception, or the spirit of sin",           s:"The great dragon was cast out, that old serpent, called the Devil, and Satan.",           r:"Revelation 12:9 (KJV)"},
+  {n:"Eagle",      c:"creature", m:"Prophetic anointing, renewal, elevation",          s:"They shall mount up with wings as eagles.",                                               r:"Isaiah 40:31 (KJV)"},
+  {n:"Dove",       c:"creature", m:"The Holy Spirit, peace, and purity",               s:"The Holy Ghost descended in a bodily shape like a dove upon him.",                        r:"Luke 3:22 (KJV)"},
+  {n:"Horse",      c:"creature", m:"Warfare, power, or swift divine judgment",         s:"I saw heaven opened, and behold a white horse; and he that sat upon him was called Faithful and True.", r:"Revelation 19:11 (KJV)"},
+  {n:"Fish",       c:"creature", m:"Souls of men, abundance, or Christ's provision",   s:"Follow me, and I will make you fishers of men.",                                          r:"Matthew 4:19 (KJV)"},
+  {n:"Wolf",       c:"creature", m:"False prophets, danger, or spiritual predators",   s:"Beware of false prophets, which come to you in sheep's clothing, but inwardly they are ravening wolves.", r:"Matthew 7:15 (KJV)"},
+  {n:"Sheep",      c:"creature", m:"Believers, the flock of Christ, meekness",         s:"My sheep hear my voice, and I know them, and they follow me.",                            r:"John 10:27 (KJV)"},
+  {n:"Goat",       c:"creature", m:"The unrighteous, or worldly influences",           s:"He shall set the sheep on his right hand, but the goats on the left.",                    r:"Matthew 25:33 (KJV)"},
+  {n:"Ox",         c:"creature", m:"Strength, servitude, or sacrifice",                s:"Much increase is by the strength of the ox.",                                             r:"Proverbs 14:4 (KJV)"},
+  {n:"Raven",      c:"creature", m:"God's provision, or an unclean spirit",            s:"He commandeth, and raiseth the stormy wind; he maketh the storm a calm.",                 r:"Psalm 107:25 (KJV)"},
+  // OBJECTS (24)
+  {n:"Sword",         c:"object", m:"The Word of God, spiritual warfare, or judgment",   s:"The sword of the Spirit, which is the word of God.",                                     r:"Ephesians 6:17 (KJV)"},
+  {n:"Crown",         c:"object", m:"Authority, victory, or reward in Christ",           s:"Henceforth there is laid up for me a crown of righteousness.",                           r:"2 Timothy 4:8 (KJV)"},
+  {n:"Key",           c:"object", m:"Authority, access, or spiritual unlocking",         s:"I will give unto thee the keys of the kingdom of heaven.",                               r:"Matthew 16:19 (KJV)"},
+  {n:"Door",          c:"object", m:"Opportunity, Christ as the way, or a new season",   s:"I am the door: by me if any man enter in, he shall be saved.",                           r:"John 10:9 (KJV)"},
+  {n:"Ladder",        c:"object", m:"Connection between heaven and earth",               s:"He dreamed, and behold a ladder set up on the earth, and the top of it reached to heaven.", r:"Genesis 28:12 (KJV)"},
+  {n:"Bread",         c:"object", m:"The Word of God; Christ as the bread of life",      s:"I am the bread of life: he that cometh to me shall never hunger.",                       r:"John 6:35 (KJV)"},
+  {n:"Oil",           c:"object", m:"The Holy Spirit, anointing, and healing",           s:"Let them pray over him, anointing him with oil in the name of the Lord.",                r:"James 5:14 (KJV)"},
+  {n:"Gold",          c:"object", m:"Divinity, purity refined through trial",            s:"The trial of your faith, being much more precious than of gold that perisheth.",          r:"1 Peter 1:7 (KJV)"},
+  {n:"Stone",         c:"object", m:"Christ as foundation, strength, or hardened heart", s:"That spiritual Rock that followed them: and that Rock was Christ.",                       r:"1 Corinthians 10:4 (KJV)"},
+  {n:"Blood",         c:"object", m:"Atonement, the covenant of Christ, redemption",     s:"The blood of Jesus Christ his Son cleanseth us from all sin.",                           r:"1 John 1:7 (KJV)"},
+  {n:"Garment",       c:"object", m:"Righteousness, identity, or spiritual covering",    s:"He hath clothed me with the garments of salvation.",                                     r:"Isaiah 61:10 (KJV)"},
+  {n:"Candle",        c:"object", m:"The Word of God, the human spirit, or witness",     s:"Thy word is a lamp unto my feet, and a light unto my path.",                             r:"Psalm 119:105 (KJV)"},
+  {n:"Chains",        c:"object", m:"Bondage, imprisonment, or spiritual strongholds",   s:"Stand fast in the liberty wherewith Christ hath made us free.",                          r:"Galatians 5:1 (KJV)"},
+  {n:"Scroll",        c:"object", m:"God's Word, life record, or divine decree",         s:"I saw a book written within and on the backside, sealed with seven seals.",               r:"Revelation 5:1 (KJV)"},
+  {n:"Trumpet",       c:"object", m:"Divine announcement or the Second Coming",          s:"The Lord himself shall descend from heaven with the trump of God.",                       r:"1 Thessalonians 4:16 (KJV)"},
+  {n:"Shield",        c:"object", m:"Faith and God's divine defense",                    s:"Taking the shield of faith, wherewith ye shall quench all the fiery darts of the wicked.", r:"Ephesians 6:16 (KJV)"},
+  {n:"Salt",          c:"object", m:"Preservation, the believer's influence",            s:"Ye are the salt of the earth.",                                                           r:"Matthew 5:13 (KJV)"},
+  {n:"Honey",         c:"object", m:"God's Word as sweet; the promised land",            s:"How sweet are thy words unto my taste! yea, sweeter than honey to my mouth!",            r:"Psalm 119:103 (KJV)"},
+  {n:"Ark",           c:"object", m:"Salvation, God's covenant, or divine protection",   s:"And the LORD shut him in.",                                                               r:"Genesis 7:16 (KJV)"},
+  {n:"Shepherd Staff",c:"object", m:"God's guidance, comfort, and correction",           s:"Thy rod and thy staff they comfort me.",                                                  r:"Psalm 23:4 (KJV)"},
+  {n:"Silver",        c:"object", m:"Redemption or the Word of God purified",            s:"The words of the LORD are pure words: as silver tried in a furnace of earth, purified seven times.", r:"Psalm 12:6 (KJV)"},
+  {n:"Potter's Clay", c:"object", m:"God shaping and molding your life",                 s:"O house of Israel, cannot I do with you as this potter? saith the LORD.",                r:"Jeremiah 18:6 (KJV)"},
+  {n:"Net",           c:"object", m:"Evangelism, soul-catching, or entrapment",          s:"Follow me, and I will make you fishers of men.",                                          r:"Matthew 4:19 (KJV)"},
+  {n:"Winepress",     c:"object", m:"God's judgment, trials producing fruit",            s:"He treadeth the winepress of the fierceness and wrath of Almighty God.",                  r:"Revelation 19:15 (KJV)"},
+  // PEOPLE (8)
+  {n:"Angel",    c:"person", m:"Divine messenger, protection, or God's instruction",  s:"He shall give his angels charge over thee, to keep thee in all thy ways.",               r:"Psalm 91:11 (KJV)"},
+  {n:"Stranger", c:"person", m:"God in disguise, testing, or an unrecognized messenger", s:"Be not forgetful to entertain strangers: for thereby some have entertained angels unawares.", r:"Hebrews 13:2 (KJV)"},
+  {n:"Child",    c:"person", m:"Innocence, new beginning, or the kingdom of God",     s:"Suffer little children to come unto me: for of such is the kingdom of heaven.",          r:"Matthew 19:14 (KJV)"},
+  {n:"King",     c:"person", m:"Authority, Christ as King, or earthly power",         s:"The LORD is our judge, the LORD is our lawgiver, the LORD is our king.",                 r:"Isaiah 33:22 (KJV)"},
+  {n:"Shepherd", c:"person", m:"Christ's care, pastoral leadership, divine guidance", s:"The LORD is my shepherd; I shall not want.",                                             r:"Psalm 23:1 (KJV)"},
+  {n:"Enemy",    c:"person", m:"Satan, spiritual opposition, or personal conflict",   s:"Your adversary the devil, as a roaring lion, walketh about, seeking whom he may devour.", r:"1 Peter 5:8 (KJV)"},
+  {n:"Elder",    c:"person", m:"Wisdom, the old nature, or ancient covenant",         s:"Thou shalt rise up before the hoary head, and honour the face of the old man.",          r:"Leviticus 19:32 (KJV)"},
+  {n:"Prophet",  c:"person", m:"God's mouthpiece, warning, or spiritual foresight",   s:"Surely the Lord GOD will do nothing, but he revealeth his secret unto his servants the prophets.", r:"Amos 3:7 (KJV)"},
+  // PLACES (11)
+  {n:"Mountain",      c:"place", m:"God's dwelling, obstacles, or divine encounter",   s:"I will lift up mine eyes unto the hills, from whence cometh my help.",                   r:"Psalm 121:1 (KJV)"},
+  {n:"Valley",        c:"place", m:"Season of trials or the shadow of death",          s:"Yea, though I walk through the valley of the shadow of death, I will fear no evil.",     r:"Psalm 23:4 (KJV)"},
+  {n:"Garden",        c:"place", m:"Eden, intimacy with God, or spiritual growth",     s:"The LORD God planted a garden eastward in Eden.",                                        r:"Genesis 2:8 (KJV)"},
+  {n:"Wilderness",    c:"place", m:"Testing, preparation, or spiritual isolation",     s:"He was there in the wilderness forty days, tempted of Satan.",                           r:"Mark 1:13 (KJV)"},
+  {n:"Temple",        c:"place", m:"The body of Christ, God's dwelling, worship",      s:"Know ye not that ye are the temple of God, and that the Spirit of God dwelleth in you?", r:"1 Corinthians 3:16 (KJV)"},
+  {n:"City",          c:"place", m:"Earthly kingdom or the New Jerusalem",             s:"I John saw the holy city, new Jerusalem, coming down from God out of heaven.",           r:"Revelation 21:2 (KJV)"},
+  {n:"House",         c:"place", m:"Your life, family, or God's household",            s:"In my Father's house are many mansions.",                                                r:"John 14:2 (KJV)"},
+  {n:"Prison",        c:"place", m:"Bondage to sin or spiritual imprisonment",         s:"The LORD hath anointed me to proclaim liberty to the captives.",                         r:"Isaiah 61:1 (KJV)"},
+  {n:"Road",          c:"place", m:"Life journey, the narrow or broad way",            s:"Enter ye in at the strait gate: for wide is the gate, and broad is the way, that leadeth to destruction.", r:"Matthew 7:13 (KJV)"},
+  {n:"Throne",        c:"place", m:"God's sovereignty and supreme authority",          s:"Thus saith the LORD, The heaven is my throne, and the earth is my footstool.",           r:"Isaiah 66:1 (KJV)"},
+  {n:"Harvest Field", c:"place", m:"Readiness of souls for salvation",                 s:"Lift up your eyes, and look on the fields; for they are white already to harvest.",      r:"John 4:35 (KJV)"},
+  // ACTIONS (23)
+  {n:"Flying",       c:"action", m:"Spiritual elevation, freedom in Christ, prophecy",      s:"They shall mount up with wings as eagles.",                                              r:"Isaiah 40:31 (KJV)"},
+  {n:"Falling",      c:"action", m:"Fear, loss of spiritual standing, or humbling",          s:"Pride goeth before destruction, and an haughty spirit before a fall.",                  r:"Proverbs 16:18 (KJV)"},
+  {n:"Running",      c:"action", m:"Pursuing God's calling or fleeing from sin",             s:"Let us run with patience the race that is set before us.",                               r:"Hebrews 12:1 (KJV)"},
+  {n:"Being Chased", c:"action", m:"Spiritual warfare, fear, or fleeing conviction",         s:"Submit yourselves to God. Resist the devil, and he will flee from you.",                 r:"James 4:7 (KJV)"},
+  {n:"Drowning",     c:"action", m:"Overwhelmed by trials or sinking in sin",                s:"Save me, O God; for the waters are come in unto my soul.",                               r:"Psalm 69:1 (KJV)"},
+  {n:"Building",     c:"action", m:"Establishing God's kingdom or ministry",                 s:"Except the LORD build the house, they labour in vain that build it.",                    r:"Psalm 127:1 (KJV)"},
+  {n:"Eating",       c:"action", m:"Feeding on the Word or communing with God",              s:"Man shall not live by bread alone, but by every word that proceedeth out of the mouth of God.", r:"Matthew 4:4 (KJV)"},
+  {n:"Praying",      c:"action", m:"Intercession, intimacy with God, spiritual warfare",     s:"Pray without ceasing.",                                                                  r:"1 Thessalonians 5:17 (KJV)"},
+  {n:"Healing",      c:"action", m:"God's restoration, deliverance, or physical healing",    s:"With his stripes we are healed.",                                                        r:"Isaiah 53:5 (KJV)"},
+  {n:"Harvest",      c:"action", m:"End times, reaping what was sown, or soul winning",      s:"The harvest truly is plenteous, but the labourers are few.",                             r:"Matthew 9:37 (KJV)"},
+  {n:"Wedding",      c:"action", m:"Christ and the church, covenant relationship",           s:"Blessed are they which are called unto the marriage supper of the Lamb.",                r:"Revelation 19:9 (KJV)"},
+  {n:"Death",        c:"action", m:"End of old season, dying to self, or spiritual death",   s:"I am crucified with Christ: nevertheless I live; yet not I, but Christ liveth in me.",   r:"Galatians 2:20 (KJV)"},
+  {n:"Resurrection", c:"action", m:"New life, Christ's resurrection power, restoration",     s:"I am the resurrection, and the life: he that believeth in me, though he were dead, yet shall he live.", r:"John 11:25 (KJV)"},
+  {n:"Battle",       c:"action", m:"Spiritual warfare, standing firm in faith",              s:"We wrestle not against flesh and blood, but against principalities, against powers.",    r:"Ephesians 6:12 (KJV)"},
+  {n:"Weeping",      c:"action", m:"Intercession, repentance, or mourning over sin",         s:"They that sow in tears shall reap in joy.",                                              r:"Psalm 126:5 (KJV)"},
+  {n:"Rejoicing",    c:"action", m:"Divine joy, restoration, or God's delight in you",       s:"Then was our mouth filled with laughter, and our tongue with singing.",                  r:"Psalm 126:2 (KJV)"},
+  {n:"Wandering",    c:"action", m:"Spiritual aimlessness or a period of testing",           s:"The LORD made them wander in the wilderness forty years.",                               r:"Numbers 32:13 (KJV)"},
+  {n:"Abundance",    c:"action", m:"God's blessing, overflow, or the promised land",         s:"I am come that they might have life, and that they might have it more abundantly.",       r:"John 10:10 (KJV)"},
+  {n:"Poverty",      c:"action", m:"Spiritual poverty, total dependence on God",             s:"Blessed are the poor in spirit: for theirs is the kingdom of heaven.",                   r:"Matthew 5:3 (KJV)"},
+  {n:"Climbing",     c:"action", m:"Spiritual progress, ascending toward God",               s:"Who shall ascend into the hill of the LORD? or who shall stand in his holy place?",      r:"Psalm 24:3 (KJV)"},
+  {n:"Sowing",       c:"action", m:"Investing in God's kingdom, or planting faith",          s:"He which soweth sparingly shall reap also sparingly; and he which soweth bountifully shall reap also bountifully.", r:"2 Corinthians 9:6 (KJV)"},
+  {n:"Being Lost",   c:"action", m:"Spiritual confusion, need of God's direction",           s:"I have gone astray like a lost sheep; seek thy servant; for I do not forget thy commandments.", r:"Psalm 119:176 (KJV)"},
+  {n:"Being Found",  c:"action", m:"Redemption, restoration, return to God",                 s:"For this my son was dead, and is alive again; he was lost, and is found.",               r:"Luke 15:24 (KJV)"},
+];
+
+// ══════════════════════════════════════════════════
+// KEYWORD MAP  (symbol name → trigger words)
+// ══════════════════════════════════════════════════
+const KW = {
+  "Water":       ["water","river","stream","flood","ocean","sea","lake","rain","swimming","waves","puddle"],
+  "Fire":        ["fire","flame","burning","blaze","smoke","furnace","coal","ablaze","inferno"],
+  "Wind":        ["wind","breeze","gale","air","whirlwind","breath","blew"],
+  "Storm":       ["storm","thunder","lightning","tempest","hurricane","torrent"],
+  "Light":       ["light","glow","radiance","shining","bright","illuminate","gleam","beam","glow"],
+  "Darkness":    ["dark","darkness","shadow","night","black","blind","void"],
+  "River":       ["river","stream","brook","current","flowing water"],
+  "Sea":         ["ocean","sea","waves","deep water","vast water","abyss"],
+  "Rain":        ["rain","rainfall","downpour","shower","drizzle"],
+  "Flood":       ["flood","overflow","inundated","submerged","rising water"],
+  "Rainbow":     ["rainbow","bow in the sky","arc of color"],
+  "Sun":         ["sun","sunrise","sunset","daylight","sunshine","solar"],
+  "Moon":        ["moon","lunar","crescent","moonlight"],
+  "Stars":       ["stars","starlight","constellation","night sky"],
+  "Cloud":       ["cloud","clouds","cloudy","pillar of cloud","overcast"],
+  "Tree":        ["tree","oak","cedar","roots","branch","trunk","forest","wood"],
+  "Fruit":       ["fruit","apple","grape","fig","bearing fruit"],
+  "Vine":        ["vine","vineyard","branches","grapevine"],
+  "Wheat":       ["wheat","grain","field","harvest","golden field"],
+  "Earthquake":  ["earthquake","shaking","trembling","ground shook"],
+  "Desert":      ["desert","wilderness","dry","barren","sand","wasteland"],
+  "Lion":        ["lion","roar","fierce","big cat","lioness"],
+  "Lamb":        ["lamb","gentle lamb","meek","wool","flock"],
+  "Serpent":     ["snake","serpent","viper","python","slither","reptile","coil"],
+  "Eagle":       ["eagle","soar","wings","hawk","bird of prey","talons"],
+  "Dove":        ["dove","pigeon","white bird"],
+  "Horse":       ["horse","stallion","steed","riding","gallop"],
+  "Fish":        ["fish","fishing","net","catch","angling","fish pond"],
+  "Wolf":        ["wolf","pack","howl","predator"],
+  "Sheep":       ["sheep","flock","lamb","pasture","wool"],
+  "Goat":        ["goat","billy goat"],
+  "Raven":       ["raven","crow","black bird"],
+  "Sword":       ["sword","blade","weapon","pierce","dagger","cut"],
+  "Crown":       ["crown","diadem","reign","royalty","kingly"],
+  "Key":         ["key","keys","unlock","lock"],
+  "Door":        ["door","gate","entrance","threshold","portal","gateway","opened door"],
+  "Ladder":      ["ladder","steps","climbing a ladder","rungs"],
+  "Bread":       ["bread","loaf","baking","breaking bread"],
+  "Oil":         ["oil","anointing","lamp oil"],
+  "Gold":        ["gold","golden","gilded","treasure","riches"],
+  "Stone":       ["stone","rock","boulder","cornerstone","pebble"],
+  "Blood":       ["blood","bleeding","wounds","scarlet","crimson","red"],
+  "Garment":     ["garment","robe","clothes","cloak","clothed","dressed","wearing"],
+  "Candle":      ["candle","lamp","torch","flame","lantern"],
+  "Chains":      ["chains","bound","shackles","imprisoned","chained"],
+  "Scroll":      ["scroll","book","writing","manuscript","open book"],
+  "Trumpet":     ["trumpet","horn","blast","shofar","fanfare"],
+  "Shield":      ["shield","armor","defense","protected","buckler"],
+  "Salt":        ["salt","salty","salted"],
+  "Honey":       ["honey","sweet","honeycomb"],
+  "Ark":         ["ark","Noah's ark","boat in a storm","ark of the covenant"],
+  "Silver":      ["silver","coin","money","silver coins"],
+  "Net":         ["net","fishing net","catching fish"],
+  "Angel":       ["angel","heavenly being","messenger","winged being","celestial"],
+  "Stranger":    ["stranger","unknown person","someone I didn't know","unfamiliar face"],
+  "Child":       ["child","baby","infant","little one","children"],
+  "King":        ["king","ruler","monarch","throne"],
+  "Shepherd":    ["shepherd","flock","tending sheep","pasture"],
+  "Enemy":       ["enemy","adversary","devil","opponent","foe","attacker"],
+  "Elder":       ["elder","old man","wise man","aged","grandfather"],
+  "Prophet":     ["prophet","prophecy","warning","vision of the future"],
+  "Mountain":    ["mountain","hill","peak","summit","high place","ascend"],
+  "Valley":      ["valley","low ground","shadow","ravine"],
+  "Garden":      ["garden","flowers","eden","orchard","paradise"],
+  "Wilderness":  ["wilderness","wandering","barren land","desert road"],
+  "Temple":      ["temple","church","sanctuary","chapel","worship","cathedral"],
+  "City":        ["city","town","Jerusalem","new city","great city"],
+  "House":       ["house","home","room","building","dwelling","my house"],
+  "Prison":      ["prison","jail","cell","locked up","captive"],
+  "Road":        ["road","path","way","journey","travelling","crossroads"],
+  "Throne":      ["throne","royal seat","sitting on a throne"],
+  "Flying":      ["flying","soaring","floating","levitating","airborne","above the clouds"],
+  "Falling":     ["falling","fell","drop","plunge","stumble","tumble","falling down"],
+  "Running":     ["running","sprint","race","jogging","ran"],
+  "Being Chased":["chased","being chased","pursued","hunted","running from","escaping"],
+  "Drowning":    ["drowning","sinking","underwater","submerged","gasping for air"],
+  "Building":    ["building","construction","building a house","laying bricks"],
+  "Eating":      ["eating","food","meal","feast","eating bread"],
+  "Praying":     ["praying","prayer","kneeling","interceding","petition"],
+  "Healing":     ["healing","healed","cured","restored","made well"],
+  "Harvest":     ["harvest","reaping","gathering crops","fields ready"],
+  "Wedding":     ["wedding","marriage","bride","groom","ceremony","vows"],
+  "Death":       ["death","dying","dead","grave","coffin","funeral"],
+  "Resurrection":["resurrection","risen","alive again","raised from the dead"],
+  "Battle":      ["battle","war","fighting","armies","combat","conflict"],
+  "Weeping":     ["crying","weeping","tears","sobbing","mourning","wept"],
+  "Rejoicing":   ["laughing","joy","celebrating","singing","dancing","praise"],
+  "Wandering":   ["wandering","lost direction","aimless","roaming"],
+  "Abundance":   ["abundance","plenty","overflow","overflowing","prosper","blessed"],
+  "Poverty":     ["poor","poverty","lacking","empty handed","nothing"],
+  "Climbing":    ["climbing","ascending","going up","scaling"],
+  "Sowing":      ["sowing","planting","seeds","planting seed","scattering"],
+  "Being Lost":  ["lost","can't find my way","confused direction","going in circles"],
+  "Being Found": ["found","returned","rescued","saved","came back"],
+};
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+const STATE = {
+  dreams:     JSON.parse(localStorage.getItem('tdj_dreams') || '[]'),
+  voiceUsed:  parseInt(localStorage.getItem('tdj_voice') || '0'),
+  filter:     'all',
+  recording:  false,
+  mood:       '',
+  todayIdx:   new Date().getDate() % VERSES.length,
+};
+
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+function enterApp() {
+  document.getElementById('splash').classList.remove('active');
+  document.getElementById('screen-home').classList.add('active');
+  renderHome();
+}
+
+function navigate(to) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + to).classList.add('active');
+  if (to === 'home')    renderHome();
+  if (to === 'library') renderLibrary();
+  if (to === 'reminder') renderReminder();
+}
+
+function showLog() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-log').classList.add('active');
+  const atLim = STATE.dreams.length >= 30;
+  document.getElementById('dream-limit-warn').style.display = atLim ? 'block' : 'none';
+  document.getElementById('save-btn').disabled = atLim;
+  document.getElementById('dream-title').value = '';
+  document.getElementById('dream-body').value  = '';
+  STATE.mood = ''; STATE.recording = false;
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  updateVoiceUI();
+}
+
+// ══════════════════════════════════════════════════
+// HOME
+// ══════════════════════════════════════════════════
+function renderHome() {
+  const v = VERSES[STATE.todayIdx];
+  document.getElementById('daily-scripture').innerHTML =
+    `<div class="scripture-label">Morning Scripture · KJV</div>
+     <div class="scripture-text">"${v.t}"</div>
+     <div class="scripture-ref">— ${v.r}</div>`;
+
+  const dc = STATE.dreams.length;
+  const vc = STATE.voiceUsed;
+  document.getElementById('dream-count').innerHTML = `${dc} <span>/ 30</span>`;
+  document.getElementById('voice-count').innerHTML = `${vc} <span>/ 2</span>`;
+  document.getElementById('dream-bar').style.width = (dc/30*100)+'%';
+  document.getElementById('voice-bar').style.width = (vc/2*100)+'%';
+
+  const list = document.getElementById('dream-list');
+  if (!STATE.dreams.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🌙</div>
+      <div class="empty-title">No Dreams Yet</div>
+      <div class="empty-sub">"For God speaketh once, yea twice, yet man perceiveth it not.<br>In a dream, in a vision of the night..."<br>— Job 33:14–15 (KJV)<br><br>Tap + to record your first dream.</div>
+    </div>`;
+    return;
+  }
+  list.innerHTML = STATE.dreams.slice().reverse().map((d, ri) => {
+    const idx   = STATE.dreams.length - 1 - ri;
+    const chips = (d.symbols||[]).slice(0,4).map(s =>
+      `<span class="symbol-chip" onclick="openSymModal('${s}',event)">${s}</span>`).join('');
+    return `<div class="dream-entry" onclick="openDream(${idx})">
+      <div class="entry-date">
+        ${d.date}
+        ${d.isVoice ? '<span class="entry-badge">🎙 Voice</span>' : ''}
+        ${d.mood ? `<span style="font-size:13px;">${moodIcon(d.mood)}</span>` : ''}
+      </div>
+      <div class="entry-title">${d.title||'Untitled Dream'}</div>
+      <div class="entry-preview">${d.body}</div>
+      ${chips ? `<div class="entry-symbols">${chips}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function moodIcon(m) { return {Peaceful:'🕊️',Fearful:'😰',Joyful:'✨',Troubled:'🌪️'}[m]||''; }
+
+// ══════════════════════════════════════════════════
+// MOOD
+// ══════════════════════════════════════════════════
+function selectMood(btn, mood) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  STATE.mood = mood;
+}
+
+// ══════════════════════════════════════════════════
+// VOICE
+// ══════════════════════════════════════════════════
+function updateVoiceUI() {
+  const used = STATE.voiceUsed;
+  const rem  = 2 - used;
+  const status = document.getElementById('voice-status');
+  const btn    = document.getElementById('record-btn');
+  const warn   = document.getElementById('voice-limit-warn');
+  document.getElementById('voice-used-lbl').textContent = `${used} of 2 voice recordings used`;
+  if (used >= 2) {
+    status.textContent = 'Voice recording limit reached (2 of 2 used)';
+    btn.disabled = true; btn.style.opacity = '0.38';
+    warn.style.display = 'block';
+  } else {
+    status.textContent = `Tap to record · ${rem} free recording${rem===1?'':'s'} remaining`;
+    btn.disabled = false; btn.style.opacity = '1';
+    warn.style.display = 'none';
+  }
+}
+
+function toggleRecord() {
+  if (STATE.voiceUsed >= 2) return;
+  if (!STATE.recording) {
+    STATE.recording = true;
+    document.getElementById('record-btn').classList.add('rec');
+    document.getElementById('record-btn').textContent = '⏹️';
+    document.getElementById('voice-status').textContent = 'Recording... tap again to stop';
+    document.getElementById('voice-status').classList.add('rec');
+  } else {
+    STATE.recording = false;
+    STATE.voiceUsed++;
+    localStorage.setItem('tdj_voice', STATE.voiceUsed);
+    document.getElementById('record-btn').classList.remove('rec');
+    document.getElementById('record-btn').textContent = '🎙️';
+    document.getElementById('voice-status').classList.remove('rec');
+    const body = document.getElementById('dream-body');
+    if (!body.value.trim()) body.value = 'Voice entry transcribed: I was in a place unlike any I had known before...';
+    updateVoiceUI();
+    showToast('Voice entry recorded');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// SYMBOL DETECTION
+// ══════════════════════════════════════════════════
+function detectSymbols(text) {
+  const lower = text.toLowerCase();
+  const found = [];
+  for (const [sym, words] of Object.entries(KW)) {
+    if (words.some(w => lower.includes(w)) && !found.includes(sym)) found.push(sym);
+  }
+  return found.slice(0, 8);
+}
+
+function getSymbol(name) { return SYMBOLS.find(s => s.n === name); }
+
+// ══════════════════════════════════════════════════
+// SAVE DREAM
+// ══════════════════════════════════════════════════
+function saveDream() {
+  if (STATE.dreams.length >= 30) return;
+  const body = document.getElementById('dream-body').value.trim();
+  if (!body) { showToast('Please describe your dream first'); return; }
+  const title   = document.getElementById('dream-title').value.trim();
+  const symbols = detectSymbols(body + ' ' + title);
+  const now     = new Date();
+  const dream   = {
+    id: Date.now(), title, body,
+    mood: STATE.mood, symbols,
+    date: now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}),
+    isVoice: STATE.voiceUsed > 0,
+  };
+  STATE.dreams.push(dream);
+  localStorage.setItem('tdj_dreams', JSON.stringify(STATE.dreams));
+  showToast(`Dream saved · ${symbols.length} symbol${symbols.length!==1?'s':''} detected`);
+  navigate('home');
+}
+
+// ══════════════════════════════════════════════════
+// OPEN DREAM DETAIL
+// ══════════════════════════════════════════════════
+function openDream(idx) {
+  const d = STATE.dreams[idx];
+  document.getElementById('detail-bar-title').textContent = d.title || 'Dream';
+  document.getElementById('detail-date').textContent  = d.date;
+  document.getElementById('detail-title').textContent = d.title || 'Untitled Dream';
+  document.getElementById('detail-body').textContent  = d.body;
+  document.getElementById('detail-mood').innerHTML    = d.mood
+    ? `Mood recorded: <span style="color:var(--cream2);">${moodIcon(d.mood)} ${d.mood}</span>`  : '';
+
+  const symDiv = document.getElementById('detail-symbols');
+  if (d.symbols && d.symbols.length) {
+    symDiv.innerHTML = d.symbols.map(name => {
+      const s = getSymbol(name);
+      if (!s) return '';
+      return `<div class="symbol-card">
+        <div class="symbol-name">${s.n}</div>
+        <div class="symbol-meaning">${s.m}</div>
+        <div class="symbol-scripture">"${s.s}"</div>
+        <div class="symbol-ref">— ${s.r}</div>
+      </div>`;
+    }).join('');
+  } else {
+    symDiv.innerHTML = `<div style="font-size:13px;color:var(--muted);font-style:italic;padding:14px 0;">No symbols detected. Try describing your dream in more detail and save again.</div>`;
+  }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-detail').classList.add('active');
+}
+
+// ══════════════════════════════════════════════════
+// SYMBOL LIBRARY
+// ══════════════════════════════════════════════════
+function renderLibrary() {
+  const q   = (document.getElementById('lib-search')?.value || '').toLowerCase();
+  let list  = SYMBOLS;
+  if (STATE.filter !== 'all') list = list.filter(s => s.c === STATE.filter);
+  if (q) list = list.filter(s => s.n.toLowerCase().includes(q) || s.m.toLowerCase().includes(q));
+
+  document.getElementById('library-list').innerHTML = list.map(s => `
+    <div class="lib-item" onclick="this.classList.toggle('open')">
+      <div class="lib-item-header">
+        <div class="lib-item-name">${s.n}</div>
+        <div class="lib-item-cat">${s.c}</div>
+      </div>
+      <div class="lib-item-meaning">${s.m}</div>
+      <div class="lib-item-expand">
+        <div class="symbol-scripture">"${s.s}"</div>
+        <div class="symbol-ref" style="margin-top:6px;">— ${s.r}</div>
+      </div>
+    </div>`).join('') || `<div style="text-align:center;padding:40px;color:var(--muted);font-style:italic;">No symbols found.</div>`;
+}
+
+function filterCat(btn, cat) {
+  STATE.filter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLibrary();
+}
+
+// ══════════════════════════════════════════════════
+// SYMBOL MODAL  (chip tap)
+// ══════════════════════════════════════════════════
+function openSymModal(name, e) {
+  e.stopPropagation();
+  const s = getSymbol(name);
+  if (!s) return;
+  document.getElementById('m-name').textContent      = s.n;
+  document.getElementById('m-meaning').textContent   = s.m;
+  document.getElementById('m-scripture').textContent = `"${s.s}"`;
+  document.getElementById('m-ref').textContent       = `— ${s.r}`;
+  document.getElementById('sym-modal').classList.add('open');
+}
+function closeModal() { document.getElementById('sym-modal').classList.remove('open'); }
+
+// ══════════════════════════════════════════════════
+// REMINDERS
+// ══════════════════════════════════════════════════
+function renderReminder() {
+  const v = VERSES[STATE.todayIdx];
+  document.getElementById('rem-verse').textContent = `"${v.t}"`;
+  document.getElementById('rem-ref').textContent   = `— ${v.r}`;
+}
+
+function togSwitch(id) { document.getElementById(id).classList.toggle('on'); }
+function saveReminders() { showToast('Reminder settings saved'); }
+
+// ══════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Init
+renderLibrary();
+</script>
+</body>
+</html>
